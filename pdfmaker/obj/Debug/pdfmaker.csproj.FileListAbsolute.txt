@@ -1,0 +1,8 @@
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\pdfmaker.dll
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\pdfmaker.pdb
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\SharpYaml.dll
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\SharpYaml.xml
+D:\MyGitHub\pdfmaker\pdfmaker\obj\Debug\pdfmaker.dll
+D:\MyGitHub\pdfmaker\pdfmaker\obj\Debug\pdfmaker.pdb
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\itextsharp.dll
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\itextsharp.xml

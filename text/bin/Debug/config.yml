@@ -1,0 +1,27 @@
+# 文档高度
+width: 180
+# 文档宽度
+height: 90
+
+basefont: simsun.ttc
+
+img: 
+  - name: img1
+    width: 70
+    height: 70
+    x: 55
+    y: 15
+
+line:
+  - name: line1
+    sx: 0
+    sy: 0
+    ex: 180
+    ey: 90
+
+text: 
+  - name: text1
+    x: 40
+    y: 5
+    #size: 
+    #spacing:
