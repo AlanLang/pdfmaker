@@ -7,6 +7,8 @@ basefont: simsun.ttc
 
 img: 
   - name: img1
+    # type: img/qrcode/brcode
+    type: qrcode
     width: 70
     height: 70
     x: 55

@@ -1,8 +1,10 @@
 ﻿using iTextSharp.text;
 using iTextSharp.text.pdf;
+using QRCoder;
 using SharpYaml.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -17,14 +19,15 @@ namespace pdfmaker
 
         }
 
-        public bool MakePdf(PdfDatas data, string configPath, string pdfPath)
+
+        public bool MakePdf(NameValueCollection nav, string configPath, string pdfPath = "new.pdf")
         {
-            List<PdfDatas> datas = new List<PdfDatas>();
-            datas.Add(data);
-            return MakePdf(datas, configPath, pdfPath);
+            List<NameValueCollection> navs = new List<NameValueCollection>();
+            navs.Add(nav);
+            return MakePdf(navs,configPath, pdfPath);
         }
 
-        public bool MakePdf(List<PdfDatas> datas, string configPath, string pdfPath)
+        public bool MakePdf(List<NameValueCollection> navs, string configPath, string pdfPath = "new.pdf")
         {
             if (string.IsNullOrEmpty(configPath))
             {
@@ -53,93 +56,89 @@ namespace pdfmaker
                     return false;
                 }
             }
-            if (datas.Count == 0)
+            if (navs.Count == 0)
             {
                 _code = 1;
                 _err = "数据集合为空，无法生成pdf";
                 return false;
             }
-            else
+            if (navs[0].Count == 0)
             {
-                pdfDatas = datas;
+                _code = 1;
+                _err = "数据集合为空，无法生成pdf";
+                return false;
             }
-
-            using(Document document = new Document(new Rectangle(docConfig.width, docConfig.height), 0, 0, 0, 0)){
+            using (Document document = new Document(new Rectangle(docConfig.width, docConfig.height), 0, 0, 0, 0)) {
                 string path = System.Threading.Thread.GetDomain().BaseDirectory + docConfig.basefont + ",0";
                 BaseFont basefont = BaseFont.CreateFont(path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
                 NewPath(pdfPath);
 
                 PdfWriter writer = PdfWriter.GetInstance(document, new System.IO.FileStream(pdfPath, System.IO.FileMode.Create));
                 document.Open();
-                int pageNum = pdfDatas.Count;
+                int pageNum = navs.Count;
                 int thisPage = 0;
                 bool NoWrite = true;
-                foreach (var pdfdata in pdfDatas)
+
+                foreach (var nav in navs)
                 {
                     thisPage++;
-                    if (pdfdata.lines != null && pdfdata.lines.Count > 0)
+                    foreach (var item in nav)
                     {
-                        foreach (var lineName in pdfdata.lines)
+                        var line = docConfig.line.Where(a => a.name == item.ToString()).ToList();
+                        if (line.Count > 0)
                         {
-                            var line = docConfig.line.Where(a => a.name == lineName).ToList();
-                            if (line.Count > 0)
+                            PdfContentByte cb = writer.DirectContent;
+                            cb.MoveTo(line[0].sx, line[0].sy);
+                            cb.LineTo(line[0].ex, line[0].ey);
+                            cb.Stroke();
+                            NoWrite = false;
+                            continue;
+                        }
+                        var text = docConfig.text.Where(a => a.name == item.ToString()).ToList();
+                        if (text.Count > 0)
+                        {
+                            int size = 0;
+                            int spacing = 0;
+                            var ctext = text[0];
+                            size = ctext.size > 0 ? ctext.size : fontsize;
+                            spacing = ctext.spacing > 0 ? ctext.spacing : fontspacing;
+                            PdfContentByte cb = writer.DirectContent;
+                            cb.BeginText();
+                            cb.SetFontAndSize(basefont, size);//设定字号 
+                            cb.SetCharacterSpacing(spacing);//设定字间距 
+
+                            cb.SetRGBColorFill(0, 0, 0);//设定文本颜色 
+                            cb.ShowTextAligned(PdfContentByte.ALIGN_LEFT, nav[item.ToString()], ctext.x, ctext.y, 0);
+                            cb.EndText();
+                            NoWrite = false;
+                            continue;
+                        }
+                        var vimg = docConfig.img.Where(a => a.name == item.ToString()).ToList();
+                        if (vimg.Count > 0)
+                        {
+                            var imgconfig = vimg[0];
+                            if ("img".Equals(imgconfig.type))
                             {
-                                PdfContentByte cb = writer.DirectContent;
-                                cb.MoveTo(line[0].sx, line[0].sy);
-                                cb.LineTo(line[0].ex, line[0].ey);
-                                cb.Stroke();
+                                Image img = Image.GetInstance(nav[item.ToString()]);
+                                img.SetAbsolutePosition(imgconfig.x, imgconfig.y);//图片位置
+                                img.ScaleAbsolute(imgconfig.width, imgconfig.height);//图片长宽
+                                document.Add(img);
+                                NoWrite = false;
+                            } else if("brcode".Equals(imgconfig.type)) {
+                                var image = MakeBarcode(nav[item.ToString()]);
+                                var img = iTextSharp.text.Image.GetInstance(image, BaseColor.BLACK);
+                                img.SetAbsolutePosition(imgconfig.x, imgconfig.y);//图片位置
+                                img.ScaleAbsolute(imgconfig.width, imgconfig.height);//图片长宽
+                                document.Add(img);
+                                NoWrite = false;
+                            }else{
+                                var img = iTextSharp.text.Image.GetInstance(MakeQrcode(nav[item.ToString()]), BaseColor.BLACK);
+                                img.SetAbsolutePosition(imgconfig.x, imgconfig.y);//图片位置
+                                img.ScaleAbsolute(imgconfig.width, imgconfig.height);//图片长宽
+                                document.Add(img);
                                 NoWrite = false;
                             }
-                        }
-
-                    }
-                    if (pdfdata.texts != null && pdfdata.texts.Count > 0)
-                    {
-                        foreach (var td in pdfdata.texts)
-                        {
-                            if (!string.IsNullOrEmpty(td.name) && !string.IsNullOrEmpty(td.value))
-                            {
-                                var text = docConfig.text.Where(a => a.name == td.name).ToList();
-                                if (text.Count > 0)
-                                {
-                                    int size = 0;
-                                    int spacing = 0;
-                                    var ctext = text[0];
-                                    size = ctext.size > 0 ? ctext.size : fontsize;
-                                    spacing = ctext.spacing > 0 ? ctext.spacing : fontspacing;
-                                    PdfContentByte cb = writer.DirectContent;
-                                    cb.BeginText();
-                                    cb.SetFontAndSize(basefont, size);//设定字号 
-                                    cb.SetCharacterSpacing(spacing);//设定字间距 
-
-                                    cb.SetRGBColorFill(0, 0, 0);//设定文本颜色 
-                                    cb.ShowTextAligned(PdfContentByte.ALIGN_LEFT, td.value, ctext.x, ctext.y, 0);
-                                    cb.EndText();
-                                    NoWrite = false;
-
-                                }
-
-                            }
-                        }
-                    }
-                    if (pdfdata.imgs != null && pdfdata.imgs.Count > 0)
-                    {
-                        foreach (var dimg in pdfdata.imgs)
-                        {
-                            if (!string.IsNullOrEmpty(dimg.name) && dimg.img != null)
-                            {
-                                var vimg = docConfig.img.Where(a => a.name == dimg.name).ToList();
-                                if (vimg.Count > 0)
-                                {
-                                    var imgconfig = vimg[0];
-                                    var immg = iTextSharp.text.Image.GetInstance(dimg.img, BaseColor.BLACK);
-                                    immg.SetAbsolutePosition(imgconfig.x, imgconfig.y);//图片位置
-                                    immg.ScaleAbsolute(imgconfig.width, imgconfig.height);//图片长宽
-                                    document.Add(immg);
-                                    NoWrite = false;
-
-                                }
-                            }
+                            continue;
                         }
                     }
                     if (thisPage < pageNum)
@@ -159,10 +158,33 @@ namespace pdfmaker
                 }
                 _pdfpath = pdfpath;
                 return true;
-            };
-            
+
+            }
         }
 
+        /// <summary>
+        /// 生成条形码
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public System.Drawing.Image MakeBarcode(string code)
+        {
+
+            BarcodeLib.Barcode b = new BarcodeLib.Barcode();
+            b.Height = 50;
+            b.Width = 233;
+            var image = b.Encode(BarcodeLib.TYPE.CODE128, code);
+            return image;
+        }
+
+        public System.Drawing.Image MakeQrcode(string code)
+        {
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(code, QRCodeGenerator.ECCLevel.Q);
+            QRCode qrCode = new QRCode(qrCodeData);
+            System.Drawing.Bitmap qrCodeImage = qrCode.GetGraphic(20);
+            return qrCodeImage;
+        }
 
         private void NewPath(string pDF_PATH)
         {

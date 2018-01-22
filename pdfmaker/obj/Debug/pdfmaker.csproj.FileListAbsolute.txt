@@ -6,3 +6,6 @@ D:\MyGitHub\pdfmaker\pdfmaker\obj\Debug\pdfmaker.dll
 D:\MyGitHub\pdfmaker\pdfmaker\obj\Debug\pdfmaker.pdb
 D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\itextsharp.dll
 D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\itextsharp.xml
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\BarcodeLib.dll
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\QRCoder.dll
+D:\MyGitHub\pdfmaker\pdfmaker\bin\Debug\UnityEngine.dll

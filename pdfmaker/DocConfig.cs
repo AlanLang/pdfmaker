@@ -20,6 +20,7 @@ namespace pdfmaker
     class img
     {
         public string name { get; set; }
+        public string type { get; set; }
         public float width { get; set; }
         public float height { get; set; }
         public float x { get; set; }
