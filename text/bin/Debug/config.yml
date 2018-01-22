@@ -2,9 +2,10 @@
 width: 180
 # 文档宽度
 height: 90
-
+# 基本字体
 basefont: simsun.ttc
 
+# 图形
 img: 
   - name: img1
     # type: img/qrcode/brcode
@@ -14,6 +15,7 @@ img:
     x: 55
     y: 15
 
+# 线段
 line:
   - name: line1
     sx: 0
@@ -21,6 +23,7 @@ line:
     ex: 180
     ey: 90
 
+# 文字
 text: 
   - name: text1
     x: 40

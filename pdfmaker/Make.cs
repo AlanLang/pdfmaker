@@ -19,7 +19,13 @@ namespace pdfmaker
 
         }
 
-
+        /// <summary>
+        /// 生成pdf
+        /// </summary>
+        /// <param name="nav">要生成pdf的数据</param>
+        /// <param name="configPath">配置文件</param>
+        /// <param name="pdfPath">生成的pdf</param>
+        /// <returns></returns>
         public bool MakePdf(NameValueCollection nav, string configPath, string pdfPath = "new.pdf")
         {
             List<NameValueCollection> navs = new List<NameValueCollection>();
@@ -27,6 +33,13 @@ namespace pdfmaker
             return MakePdf(navs,configPath, pdfPath);
         }
 
+        /// <summary>
+        /// 生成pdf
+        /// </summary>
+        /// <param name="nav">要生成pdf的数据集合</param>
+        /// <param name="configPath">配置文件</param>
+        /// <param name="pdfPath">生成的pdf</param>
+        /// <returns></returns>
         public bool MakePdf(List<NameValueCollection> navs, string configPath, string pdfPath = "new.pdf")
         {
             if (string.IsNullOrEmpty(configPath))
@@ -70,7 +83,17 @@ namespace pdfmaker
             }
             using (Document document = new Document(new Rectangle(docConfig.width, docConfig.height), 0, 0, 0, 0)) {
                 string path = System.Threading.Thread.GetDomain().BaseDirectory + docConfig.basefont + ",0";
-                BaseFont basefont = BaseFont.CreateFont(path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
+                BaseFont basefont;
+                try
+                {
+                    basefont = BaseFont.CreateFont(path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
+                }
+                catch (Exception ex)
+                {
+                    _code = 1;
+                    _err = "找不到basefont，请在配置文件中定义正确的字体路径";
+                    return false;
+                }
                 NewPath(pdfPath);
 
                 PdfWriter writer = PdfWriter.GetInstance(document, new System.IO.FileStream(pdfPath, System.IO.FileMode.Create));
@@ -177,6 +200,11 @@ namespace pdfmaker
             return image;
         }
 
+        /// <summary>
+        /// 生成二维码
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
         public System.Drawing.Image MakeQrcode(string code)
         {
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
@@ -208,8 +236,6 @@ namespace pdfmaker
         private string _err;
         private string _pdfpath;
         private DocConfig docConfig;
-        private List<PdfDatas> pdfDatas;
-
 
         public int code
         {
